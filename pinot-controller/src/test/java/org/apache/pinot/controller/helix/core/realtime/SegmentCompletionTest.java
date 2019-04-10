@@ -31,6 +31,7 @@ import org.apache.pinot.common.utils.CommonConstants;
 import org.apache.pinot.common.utils.LLCSegmentName;
 import org.apache.pinot.controller.ControllerConf;
 import org.apache.pinot.controller.ControllerLeadershipManager;
+import org.apache.pinot.controller.helix.core.PinotHelixResourceManager;
 import org.apache.pinot.controller.helix.core.realtime.segment.CommittingSegmentDescriptor;
 import org.apache.zookeeper.data.Stat;
 import org.testng.Assert;
@@ -39,6 +40,7 @@ import org.testng.annotations.Test;
 
 import static org.apache.pinot.common.protocols.SegmentCompletionProtocol.ControllerResponseStatus;
 import static org.apache.pinot.common.protocols.SegmentCompletionProtocol.Request;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -65,8 +67,10 @@ public class SegmentCompletionTest {
 
   public void testCaseSetup(boolean isLeader, boolean isConnected)
       throws Exception {
-    segmentManager = new MockPinotLLCRealtimeSegmentManager(isLeader, isConnected);
-    ControllerLeadershipManager controllerLeadershipManager = segmentManager.getControllerLeadershipManager();
+    PinotHelixResourceManager mockPinotHelixResourceManager = mock(PinotHelixResourceManager.class);
+    HelixManager mockHelixManager = createMockHelixManager(isLeader, isConnected);
+    when(mockPinotHelixResourceManager.getHelixZkManager()).thenReturn(mockHelixManager);
+    segmentManager = new MockPinotLLCRealtimeSegmentManager(mockPinotHelixResourceManager);
     final int partitionId = 23;
     final int seqId = 12;
     final long now = System.currentTimeMillis();
@@ -1142,9 +1146,8 @@ public class SegmentCompletionTest {
     public String _stoppedInstance;
     public HelixManager _helixManager = mock(HelixManager.class);
 
-    protected MockPinotLLCRealtimeSegmentManager(boolean isLeader, boolean isConnected) {
-      super(null, clusterName, null, null, null, CONTROLLER_CONF, new ControllerMetrics(new MetricsRegistry()),
-          new ControllerLeadershipManager(createMockHelixManager(isLeader, isConnected)));
+    protected MockPinotLLCRealtimeSegmentManager(PinotHelixResourceManager pinotHelixResourceManager) {
+      super(pinotHelixResourceManager, CONTROLLER_CONF, new ControllerMetrics(new MetricsRegistry()), new ControllerLeadershipManager(pinotHelixResourceManager.getHelixZkManager()));
     }
 
     @Override
@@ -1189,20 +1192,19 @@ public class SegmentCompletionTest {
     public long _secconds;
     private boolean _isLeader;
 
-    protected MockSegmentCompletionManager(PinotLLCRealtimeSegmentManager segmentManager, boolean isLeader,
-        boolean isConnected) {
-      this(createMockHelixManager(isLeader, isConnected), segmentManager, isLeader, isConnected);
-    }
-
-    protected MockSegmentCompletionManager(HelixManager helixManager, PinotLLCRealtimeSegmentManager segmentManager, boolean isLeader,
-        boolean isConnected) {
-      this(helixManager, segmentManager, isLeader, isConnected, new ControllerLeadershipManager(helixManager));
+    protected MockSegmentCompletionManager(PinotLLCRealtimeSegmentManager segmentManager, boolean isLeader, boolean isConnected) {
+      this(createMockHelixManager(isLeader, isConnected), segmentManager, isLeader);
     }
 
     protected MockSegmentCompletionManager(HelixManager helixManager, PinotLLCRealtimeSegmentManager segmentManager,
-        boolean isLeader, boolean isConnected, ControllerLeadershipManager controllerLeadershipManager) {
-      super(helixManager, segmentManager, new ControllerMetrics(new MetricsRegistry()),
-          controllerLeadershipManager);
+        boolean isLeader) {
+      this(helixManager, segmentManager, isLeader, new ControllerLeadershipManager(helixManager));
+    }
+
+    protected MockSegmentCompletionManager(HelixManager helixManager, PinotLLCRealtimeSegmentManager segmentManager,
+        boolean isLeader, ControllerLeadershipManager controllerLeadershipManager) {
+      super(helixManager, segmentManager, new ControllerMetrics(new MetricsRegistry()), controllerLeadershipManager,
+          SegmentCompletionProtocol.getDefaultMaxSegmentCommitTimeSeconds());
       _isLeader = isLeader;
     }
 
