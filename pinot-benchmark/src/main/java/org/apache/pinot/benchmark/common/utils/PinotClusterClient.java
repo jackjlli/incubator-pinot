@@ -68,6 +68,7 @@ public class PinotClusterClient {
 
   private static final String HTTP = "http";
   private static final String HTTPS = "https";
+  private static final String INSTANCES_PATH = "/instances";
   private static final String TABLES_PATH = "/tables";
   private static final String SCHEMA_PATH = "/schemas";
   private static final String SEGMENT_PATH = "/segments";
@@ -90,6 +91,11 @@ public class PinotClusterClient {
   private static URI getURI(String scheme, String host, int port, String path)
       throws URISyntaxException {
     return new URI(scheme, null, host, port, path, null, null);
+  }
+
+  public static URI getListInstancesHttpURI(String host, int port, String tableName)
+      throws URISyntaxException {
+    return getURI(HTTP, host, port, TABLES_PATH + "/" + tableName + INSTANCES_PATH);
   }
 
   public static URI getListTablesHttpURI(String host, int port)

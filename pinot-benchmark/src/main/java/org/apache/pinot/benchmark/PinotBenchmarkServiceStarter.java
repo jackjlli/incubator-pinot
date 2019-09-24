@@ -23,6 +23,7 @@ import org.apache.helix.HelixManager;
 import org.apache.helix.HelixManagerFactory;
 import org.apache.helix.InstanceType;
 import org.apache.pinot.benchmark.api.PinotClusterManager;
+import org.apache.pinot.benchmark.api.benchmarks.BenchmarkExecutionManager;
 import org.apache.pinot.benchmark.api.data.DataPreparationManager;
 import org.apache.pinot.benchmark.api.retentions.TableRetentionManager;
 import org.apache.pinot.benchmark.common.PinotBenchServiceApplication;
@@ -44,6 +45,7 @@ public class PinotBenchmarkServiceStarter {
   private final PinotClusterClient _pinotClusterClient;
   private final PinotClusterManager _pinotClusterManager;
   private final DataPreparationManager _dataPreparationManager;
+  private final BenchmarkExecutionManager _benchmarkExecutionManager;
   private final TableRetentionManager _tableRetentionManager;
   private final PinotBenchServiceApplication _pinotBenchServiceApplication;
 
@@ -61,6 +63,8 @@ public class PinotBenchmarkServiceStarter {
     _pinotClusterLocator = new PinotClusterLocator(_config);
     _pinotClusterManager = new PinotClusterManager(_config, _pinotClusterClient, _pinotClusterLocator);
     _dataPreparationManager = new DataPreparationManager(_config, _pinotClusterClient, _pinotClusterLocator);
+    _benchmarkExecutionManager = new BenchmarkExecutionManager(_config, _pinotClusterClient, _pinotClusterLocator);
+
     _tableRetentionManager = new TableRetentionManager(_config, _pinotClusterManager);
     _pinotBenchServiceApplication = new PinotBenchServiceApplication();
   }

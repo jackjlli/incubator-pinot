@@ -19,17 +19,37 @@
 package org.apache.pinot.benchmark.api.resources;
 
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiParam;
+import javax.inject.Inject;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+import org.apache.pinot.benchmark.api.benchmarks.BenchmarkExecutionManager;
 
 
-@Api(tags = "benchmark")
+@Api(tags = "Benchmark Execution")
 @Path("/")
 public class BenchmarkExecutionResource {
+
+  @Inject
+  private BenchmarkExecutionManager _benchmarkExecutionManager;
 
   @GET
   @Path("/test")
   public String test() {
     return "Hello world!";
+  }
+
+  @POST
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/benchmark/run")
+  public SuccessResponse runBenchmarking(
+      @ApiParam(value = "tableName") @QueryParam("tableName") String tableName,
+      @ApiParam(value = "qps") @QueryParam("qps") String qps,
+      @ApiParam(value = "duration") @QueryParam("duration") String duration) {
+    return _benchmarkExecutionManager.runBenchmark(tableName, qps, duration);
   }
 }
